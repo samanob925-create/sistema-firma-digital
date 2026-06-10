@@ -1,0 +1,12 @@
+flask
+flask-cors
+pyjwt
+mysql-connector-python
+cryptography
+reportlab
+qrcode
+pypdf
+rsa
+pillow
+gunicorn
+werkzeug

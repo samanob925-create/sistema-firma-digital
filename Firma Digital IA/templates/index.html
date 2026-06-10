@@ -1,0 +1,2643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firma Digital IA - Sistema Administrativo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
+    crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/css/estilos.css">
+</head>
+<body>
+    <!-- Notificaciones -->
+    <div id="notification" class="notification" style="display: none;"></div>
+
+    <!-- Pantalla de Autenticación -->
+    <div class="auth-container" id="authScreen">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+        </div>
+        
+        <!-- Formulario de Login -->
+        <div class="auth-form" id="loginFormContainer">
+            <div class="auth-header">
+                <h1>¡Bienvenido!</h1>
+                <p>Inicio de Sesión</p>
+            </div>
+            
+            <!-- Login tradicional -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username" class="requerido"><i class="fas fa-user"></i> Usuario</label>
+                    <input type="text" id="username" class="form-control" placeholder="Ingresa tu usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="requerido"><i class="fas fa-lock"></i> Contraseña</label>
+                    <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" required>
+                    <span class="password-toggle" id="togglePassword">
+                        <i class="far fa-eye"></i>
+                    </span>
+                </div>
+                <div class="form-group">
+                    <!-- Widget reCAPTCHA -->
+                    <div class="g-recaptcha" 
+                         data-sitekey="6LedVvkrAAAAAGbteljCgmVHKi0Jc_pbzC_Fnv7T" 
+                         data-callback="captchaCompletado"
+                         data-expired-callback="captchaExpirado"
+                         data-error-callback="captchaError">
+                    </div>
+                    <div id="captcha-error" class="captcha-error">
+                        Por favor completa el reCAPTCHA
+                    </div>
+                </div>
+                <button type="submit" class="btn pulse" id="loginBtn">Iniciar Sesión</button>
+            </form>
+            
+            <div class="social-login">
+                <div class="social-btn google">
+                    <i class="fab fa-google"></i>
+                </div>
+                <div class="social-btn facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </div>
+                <div class="social-btn apple">
+                    <i class="fab fa-apple"></i>
+                </div>
+            </div>
+            
+            <div class="auth-link">
+                <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+            </div>
+            
+            <div class="auth-link">
+                ¿No tienes una cuenta? <a href="#" id="registerLink">Crear cuenta nueva</a>
+            </div>
+            
+            <div class="auth-footer">
+                <p>Sistema seguro de administración de firmas digitales</p>
+            </div>
+        </div>
+        
+        <!-- Formulario de Recuperación de Contraseña -->
+        <div class="auth-form" id="recoveryFormContainer" style="display: none;">
+            <div class="auth-header">
+                <h1>Recuperar Contraseña</h1>
+                <p>Selecciona un método de recuperación</p>
+            </div>
+            
+            <div class="recovery-container">
+                <div class="recovery-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recovery-email" class="requerido"><i class="fas fa-envelope"></i> Correo Electrónico</label>
+                    <input type="email" id="recovery-email" class="form-control" placeholder="Ingresa tu correo electrónico" required>
+                </div>
+                
+                <button type="button" class="btn" id="btnRequestRecovery">
+                    <i class="fas fa-shield-alt"></i> Solicitar Recuperación
+                </button>
+                
+                <!-- Token Recovery -->
+                <div id="tokenRecovery" style="display: none; margin-top: 20px;">
+                    <div class="token-display" id="tokenDisplay">
+                        <!-- Token generado se mostrará aquí -->
+                    </div>
+                    <div class="form-group">
+                        <label for="token-input" class="requerido">Ingresa el token</label>
+                        <input type="text" id="token-input" class="form-control" placeholder="Ingresa el token de recuperación" required>
+                    </div>
+                <div class="form-group">
+                    <label for="new-password" class="requerido">Nueva Contraseña</label>
+                    <input type="password" id="new-password" class="form-control" placeholder="Ingresa tu nueva contraseña" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-new-password" class="requerido">Confirmar Contraseña</label>
+                    <input type="password" id="confirm-new-password" class="form-control" placeholder="Repite tu nueva contraseña" required>
+                </div>
+                <button type="button" class="btn" id="btnResetPassword">
+                    <i class="fas fa-check"></i> Restablecer Contraseña
+                </button>
+                </div>
+                
+                <div class="auth-link" style="margin-top: 20px;">
+                    <a href="#" id="backToLogin">Volver al inicio de sesión</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Registro -->
+        <div class="auth-form" id="registerFormContainer" style="display: none;">
+            <div class="auth-header">
+                <h1>Crear Cuenta</h1>
+                <p>Registro de nuevo usuario</p>
+            </div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regUsername" class="requerido"><i class="fas fa-user"></i> Usuario</label>
+                    <input type="text" id="regUsername" class="form-control" placeholder="Ingresa tu usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword" class="requerido"><i class="fas fa-lock"></i> Contraseña</label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="Ingresa tu contraseña" required>
+                    <small class="form-text" style="color: #666;">Mínimo 10 caracteres y al menos un carácter especial, por ejemplo: Escuela123!</small>
+                </div>
+                <div class="form-group">
+                    <label for="regConfirmPassword" class="requerido"><i class="fas fa-lock"></i> Confirmar Contraseña</label>
+                    <input type="password" id="regConfirmPassword" class="form-control" placeholder="Repite tu contraseña" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail" class="requerido"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="regEmail" class="form-control" placeholder="Ingresa tu email" required>
+                </div>
+                <div class="form-group">
+                    <label for="regNombre" class="requerido"><i class="fas fa-id-card"></i> Nombre Completo</label>
+                    <input type="text" id="regNombre" class="form-control" placeholder="Ingresa tu nombre completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="regRol"><i class="fas fa-user-tag"></i> Rol</label>
+                    <select id="regRol" class="form-control">
+                        <option value="Subdirector">Subdirector</option>
+                        <option value="Director">Director</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="regCurp" class="requerido"><i class="fas fa-id-card"></i> CURP</label>
+                    <input type="text" id="regCurp" class="form-control" maxlength="18" placeholder="CURP del firmante" required>
+                </div>
+                <div class="form-group">
+                    <label for="regCargoFirma" class="requerido"><i class="fas fa-briefcase"></i> Cargo para firma</label>
+                    <input type="text" id="regCargoFirma" class="form-control" placeholder="Ej: Director Escolar" required>
+                </div>
+                <div class="form-group">
+                    <label for="regUbicacionFirma" class="requerido"><i class="fas fa-map-marker-alt"></i> Ubicación para firma</label>
+                    <input type="text" id="regUbicacionFirma" class="form-control" placeholder="Ej: Toluca, Estado de México" required>
+                </div>
+                <button type="submit" class="btn">Crear Cuenta</button>
+            </form>
+            
+            <div class="auth-link" style="margin-top: 20px;">
+                <a href="#" id="backToLoginFromRegister">Volver al inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dashboard Principal -->
+    <div class="dashboard" id="dashboard">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-signature"></i>
+                    </div>
+                    <h1>Firma Digital IA</h1>
+                </div>
+                <div class="user-menu">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="userDisplayName">Administrador</div>
+                        <div class="user-role" id="userDisplayRole">Administrador del Sistema</div>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <nav class="sidebar">
+                <div class="nav-item active" data-target="dashboard-section">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </div>
+                <div class="nav-item" data-target="firmas-section">
+                    <i class="fas fa-shield-check"></i> Verificación
+                </div>
+                <div class="nav-item" data-target="usuarios-section">
+                    <i class="fas fa-users"></i> Usuarios
+                </div>
+                <div class="nav-item" data-target="documentos-section">
+                    <i class="fas fa-file-contract"></i> Documentos
+                </div>
+                <div class="nav-item" data-target="oficiales-section">
+                    <i class="fas fa-file-alt"></i> Documentos Oficiales
+                </div>
+                <div class="nav-item" data-target="configuracion-section">
+                    <i class="fas fa-cogs"></i> Configuración
+                </div>
+            </nav>
+            
+            <div class="content">
+                <!-- Sección Dashboard -->
+                <div class="content-section active" id="dashboard-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i> Dashboard
+                    </h2>
+                    
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-signature"></i>
+                            </div>
+                            <div class="stat-value" id="totalFirmas">0</div>
+                            <div class="stat-label">Firmas Totales</div>
+                            <div class="stat-trend trend-up">
+                                <i class="fas fa-arrow-up"></i> 0% este mes
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="stat-value" id="documentosPendientes">0</div>
+                            <div class="stat-label">Documentos Pendientes</div>
+                            <div class="stat-trend trend-down">
+                                <i class="fas fa-arrow-down"></i> 0% esta semana
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-value" id="usuariosActivos">0</div>
+                            <div class="stat-label">Usuarios Activos</div>
+                            <div class="stat-trend trend-up">
+                                <i class="fas fa-arrow-up"></i> 0 este mes
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="stat-value" id="firmasHoy">0</div>
+                            <div class="stat-label">Firmas Hoy</div>
+                            <div class="stat-trend trend-up">
+                                <i class="fas fa-arrow-up"></i> 0 desde ayer
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3><i class="fas fa-history"></i> Actividad Reciente</h3>
+                        <div class="table-container">
+                            <table id="activityTable">
+                                <thead>
+                                    <tr>
+                                        <th>Documento</th>
+                                        <th>Fecha Firma</th>
+                                        <th>Algoritmo</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activityTableBody">
+                                    <tr>
+                                        <td colspan="4" style="text-align: center; padding: 40px;">
+                                            <i class="fas fa-inbox" style="font-size: 48px; color: #E2E8F0; margin-bottom: 15px;"></i>
+                                            <p>No hay actividad reciente</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección Verificación de Firmas -->
+                <div class="content-section" id="firmas-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-shield-check"></i> Verificación de Firmas
+                    </h2>
+                    
+                    <div class="documentos-container">
+                        <div class="card">
+                            <h3><i class="fas fa-magnifying-glass"></i> Consultar Firma</h3>
+                            <form id="consultarFirmaForm">
+                                <div class="form-group" id="grupo-destinatario">
+                                    <label for="claveVerificacion" class="requerido">Clave de verificación</label>
+                                    <textarea id="claveVerificacion" class="form-control" rows="4" placeholder="Pega el código de verificación, firma digital, hash SHA256 o clave pública" required></textarea>
+                                </div>
+                                <button type="submit" class="btn" id="btnConsultarFirma">
+                                    <i class="fas fa-search"></i> Verificar
+                                </button>
+                            </form>
+                            <div id="resultadoConsultaFirma" style="display: none; margin-top: 20px;"></div>
+                        </div>
+
+                        <div class="card">
+                            <h3><i class="fas fa-qrcode"></i> Verificación por QR</h3>
+                            <p style="color: #4b5563; margin-bottom: 16px;">
+                                Escanea el QR del documento firmado con la cámara de esta laptop.
+                            </p>
+                            <div class="qr-scan-panel">
+                                <video id="qrScanVideo" playsinline muted></video>
+                                <canvas id="qrScanCanvas" style="display: none;"></canvas>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px;">
+                                    <button type="button" class="btn" id="btnStartQrScan">
+                                        <i class="fas fa-camera"></i> Escanear QR
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="btnStopQrScan" disabled>
+                                        <i class="fas fa-stop"></i> Detener
+                                    </button>
+                                </div>
+                                <p id="qrScanStatus" style="color: #4b5563; margin-top: 10px;">La cámara funciona en localhost o HTTPS.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Claves Generadas -->
+                    <div class="claves-generadas" id="clavesGeneradasContainer" style="display: none;">
+                        <h4><i class="fas fa-key"></i> Claves RSA Generadas</h4>
+                        
+                        <div class="clave-item">
+                            <div class="clave-label"> Clave Pública:</div>
+                            <div class="clave-valor" id="clavePublicaTexto">
+                                <!-- Clave pública se mostrará aquí -->
+                            </div>
+                            <button class="btn-copiar" onclick="copiarClave('clavePublicaTexto')">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                        
+                        <div class="clave-item">
+                            <div class="clave-label"> Clave Privada (Protegida):</div>
+                            <div class="clave-valor" id="clavePrivadaTexto" style="color: #999;">
+                                *** CLAVE PRIVADA PROTEGIDA ***
+                            </div>
+                        </div>
+                        
+                        <div class="clave-item">
+                            <div class="clave-label">Hash SHA256:</div>
+                            <div class="clave-valor" id="hashDocumentoTexto">
+                                <!-- Hash del documento se mostrará aquí -->
+                            </div>
+                        </div>
+                        
+                        <div class="clave-item">
+                            <div class="clave-label"> Firma Digital (Base64):</div>
+                            <div class="clave-valor" id="firmaDigitalTexto">
+                                <!-- Firma digital se mostrará aquí -->
+                            </div>
+                            <button class="btn-copiar" onclick="copiarClave('firmaDigitalTexto')">
+                                <i class="fas fa-copy"></i> Copiar Firma
+                            </button>
+                        </div>
+
+                        <div class="clave-item" id="qrFirmaContainer" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <!-- Sección Documentos -->
+                <div class="content-section" id="documentos-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-file-contract"></i> Gestión de Documentos y Firmas
+                    </h2>
+                    
+                    <div class="documentos-container">
+                        <!-- APARTADO 1: SUBIR PDF -->
+                        <div class="card">
+                            <h3><i class="fas fa-file-pdf"></i> Subir Documento PDF</h3>
+                            <form id="subirPDFForm">
+                                <div class="form-group">
+                                    <label for="pdf-nombre" class="requerido"><i class="fas fa-heading"></i> Nombre del Documento</label>
+                                    <input type="text" id="pdf-nombre" class="form-control" placeholder="Ej: Contrato de Servicios" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pdf-file" class="requerido"><i class="fas fa-file-upload"></i> Archivo PDF</label>
+                                    <input type="file" id="pdf-file" class="form-control" accept=".pdf" required>
+                                    <small class="form-text" style="color: #666;">Selecciona un archivo PDF para firmar</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pdf-descripcion"><i class="fas fa-comment"></i> Descripción (Opcional)</label>
+                                    <textarea id="pdf-descripcion" class="form-control" rows="3" placeholder="Descripción o notas del documento..."></textarea>
+                                </div>
+                                <button type="submit" class="btn" id="btnSubirPDF" style="width: 100%;">
+                                    <i class="fas fa-upload"></i> Subir PDF
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- APARTADO 2: DOCUMENTOS SUBIDOS -->
+                        <div class="card">
+                            <h3><i class="fas fa-list"></i> Documentos para Firmar</h3>
+                            <div class="table-container">
+                                <div class="empty-state" id="emptyDocumentos" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-file-contract" style="font-size: 48px; color: #E2E8F0; margin-bottom: 15px; display: block;"></i>
+                                    <p>No hay documentos cargados</p>
+                                    <p style="font-size: 12px; color: #999;">Sube un PDF desde el apartado anterior para comenzar</p>
+                                </div>
+                                <table id="documentosTable" style="display: none; width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th> Documento</th>
+                                            <th> Fecha Subida</th>
+                                            <th>Tamaño</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="documentosTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- APARTADO 3: FIRMAR DOCUMENTO -->
+                        <div class="card" id="firmarDocumentoCard" style="display: none;">
+                            <h3><i class="fas fa-pen-fancy"></i> Firmar Documento</h3>
+                            <form id="firmarDocumentoForm">
+                                <div id="documentoSeleccionadoInfo" style="background: #f0f2f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                    <p><strong>Documento:</strong> <span id="docNombreFirma"></span></p>
+                                    <p><strong>Tamaño:</strong> <span id="docTamanoFirma"></span></p>
+                                </div>
+                                
+                                <div class="form-group" id="grupo-asunto">
+                                    <label for="razon-firma" class="requerido"><i class="fas fa-comment"></i> Razón de la Firma</label>
+                                    <input type="text" id="razon-firma" class="form-control" placeholder="Ej: Validación de documento escolar" required>
+                                </div>
+
+                                <div id="perfilFirmaResumen" style="background: #f8fafc; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                    <p style="margin: 0 0 8px;"><strong>Datos de firma:</strong> se usarán los datos guardados en el registro.</p>
+                                    <p style="margin: 0;"><span id="perfilFirmaTexto"></span></p>
+                                </div>
+                                <input type="hidden" id="firmante-nombre">
+                                <input type="hidden" id="firmante-curp">
+                                <input type="hidden" id="firmante-cargo">
+                                <input type="hidden" id="ubicacion-firma">
+
+                                <div style="background: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                                    <p style="margin: 0; color: #1565c0;"><strong> Seguridad:</strong> El sistema intentará usar biometría/Windows Hello; si el equipo no lo permite, podrás autorizar la firma con contraseña.</p>
+                                </div>
+
+                                <div class="form-group" id="grupo-alumno">
+                                    <label for="password-firma" class="requerido"><i class="fas fa-lock"></i> Contraseña</label>
+                                    <input type="password" id="password-firma" class="form-control" placeholder="Confirma tu contraseña para firmar" required>
+                                </div>
+                                
+                                <button type="submit" class="btn" id="btnFirmarDocumento" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-weight: bold;">
+                                    <i class="fas fa-pen-fancy"></i> Firmar Documento
+                                </button>
+                                
+                                <button type="button" class="btn btn-secondary" id="btnCancelarFirma" onclick="cancelarFirmaDocumento()" style="width: 100%; margin-top: 10px;">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- APARTADO 4: DOCUMENTOS FIRMADOS -->
+                        <div class="card">
+                            <h3><i class="fas fa-check-circle"></i> Documentos Firmados</h3>
+                            <div class="table-container">
+                                <div class="empty-state" id="emptyDocumentosFirmados" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-certificate" style="font-size: 48px; color: #4CAF50; margin-bottom: 15px; display: block;"></i>
+                                    <p>Aún no has firmado documentos</p>
+                                </div>
+                                <table id="documentosFirmadosTable" style="display: none; width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th> Documento</th>
+                                            <th>Firmado Por</th>
+                                            <th> Fecha Firma</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="documentosFirmadosTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Documentos Oficiales -->
+                <div class="content-section" id="oficiales-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-file-alt"></i> Generación de Documentos Oficiales
+                    </h2>
+
+                    <div class="documentos-container">
+                        <div class="card">
+                            <h3><i class="fas fa-pen-to-square"></i> Datos del Documento</h3>
+                            <form id="documentoOficialForm">
+                                <div class="form-group" id="grupo-tutor">
+                                    <label for="oficial-tipo" class="requerido">Tipo de documento</label>
+                                    <select id="oficial-tipo" class="form-control" required>
+                                        <option value="Oficio escolar">Oficio escolar</option>
+                                        <option value="Constancia de estudios">Constancia de estudios</option>
+                                        <option value="Constancia de conducta">Constancia de conducta</option>
+                                        <option value="Carta de recomendación escolar">Carta de recomendación escolar</option>
+                                        <option value="Acta académica">Acta académica</option>
+                                        <option value="Circular escolar">Circular escolar</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="grupo-folio" style="display: none;">
+                                    <label for="oficial-folio" class="requerido">Folio</label>
+                                    <input type="text" id="oficial-folio" class="form-control">
+                                </div>
+                                <div class="form-group" id="grupo-lugar" style="display: none;">
+                                    <label for="oficial-lugar">Lugar</label>
+                                    <input type="text" id="oficial-lugar" class="form-control" placeholder="Ej: México">
+                                </div>
+                                <div class="form-group" id="grupo-fecha" style="display: none;">
+                                    <label for="oficial-fecha" class="requerido">Fecha</label>
+                                    <input type="date" id="oficial-fecha" class="form-control">
+                                </div>
+                                <div class="form-group" id="grupo-destinatario" style="display: none;">
+                                    <label for="oficial-destinatario">Dirigido a</label>
+                                    <input type="text" id="oficial-destinatario" class="form-control" placeholder="Nombre o área destinataria">
+                                </div>
+                                <div class="form-group" id="grupo-asunto" style="display: none;">
+                                    <label for="oficial-asunto">Asunto</label>
+                                    <input type="text" id="oficial-asunto" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="oficial-alumno">Nombre del alumno</label>
+                                    <input type="text" id="oficial-alumno" class="form-control" placeholder="Nombre completo del alumno">
+                                </div>
+                                <div class="form-group">
+                                    <label for="oficial-tutor">Madre, padre o tutor</label>
+                                    <input type="text" id="oficial-tutor" class="form-control" placeholder="Opcional si el documento lo requiere">
+                                </div>
+                                <div class="form-group" id="grupo-cuerpo" style="display: none;">
+                                    <label for="oficial-cuerpo">Contenido</label>
+                                    <textarea id="oficial-cuerpo" class="form-control" rows="6" placeholder="Opcional: datos específicos, grado, grupo, ciclo escolar o motivo."></textarea>
+                                    <small style="color: #666;">Solo escribe datos extra si el documento lo necesita; la IA redacta el formato.</small>
+                                </div>
+                                <div class="form-group" id="grupo-tono" style="display: none;">
+                                    <label for="oficial-tono">Tono de redacción</label>
+                                    <select id="oficial-tono" class="form-control">
+                                        <option value="formal">Formal</option>
+                                        <option value="directo">Directo</option>
+                                        <option value="cordial">Cordial</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="grupo-fundamento" style="display: none;">
+                                    <label for="oficial-fundamento">Fundamento o referencia</label>
+                                    <textarea id="oficial-fundamento" class="form-control" rows="3" placeholder="Opcional"></textarea>
+                                </div>
+                                <div class="form-group" id="grupo-firmante" style="display: none;">
+                                    <label for="oficial-firmante" class="requerido">Firmante</label>
+                                    <input type="text" id="oficial-firmante" class="form-control" readonly>
+                                </div>
+                                <div class="form-group" id="grupo-cargo" style="display: none;">
+                                    <label for="oficial-cargo" class="requerido">Cargo</label>
+                                    <input type="text" id="oficial-cargo" class="form-control" readonly>
+                                </div>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button type="submit" class="btn" id="btnGenerarOficialIA">
+                                        <i class="fas fa-wand-magic-sparkles"></i> Generar con IA
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="btnLimpiarOficial">
+                                        <i class="fas fa-eraser"></i> Limpiar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="card">
+                            <h3><i class="fas fa-eye"></i> Vista Previa</h3>
+                            <div id="oficialPreview" class="documento-oficial-preview">
+                                <p style="color: #777; text-align: center;">Completa el formulario y genera la vista previa.</p>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
+                                <button type="button" class="btn" id="btnDescargarOficial" disabled>
+                                    <i class="fas fa-download"></i> Descargar documento
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btnCopiarOficial" disabled>
+                                    <i class="fas fa-copy"></i> Copiar
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btnGuardarOficial" disabled>
+                                    <i class="fas fa-cloud-upload-alt"></i> Guardar en documentos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Otras secciones -->
+                <div class="content-section" id="usuarios-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-users"></i> Gestión de Usuarios
+                    </h2>
+                    <div class="card">
+                        <h3><i class="fas fa-list"></i> Usuarios del Sistema</h3>
+                        <div id="usuariosListContainer">
+                            <div class="empty-state" id="emptyUsuarios">
+                                <i class="fas fa-users"></i>
+                                <p>No hay usuarios registrados</p>
+                            </div>
+                            <div id="usuariosTableContainer" style="display:none;">
+                                <table id="usuariosTable" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Email</th>
+                                            <th>Rol</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usuariosTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Audit logs para Directores -->
+                        <div id="auditLogsContainer" style="margin-top:20px; display:none;">
+                            <h3><i class="fas fa-history"></i> Logs de Accesos (Directores)</h3>
+                            <div style="margin-bottom:10px; display:flex; align-items:center; gap:10px;">
+                                <button id="btnLoadLogs" class="btn">Cargar Logs</button>
+                                <button id="btnClearLogsView" class="btn btn-secondary">Limpiar</button>
+                                <span id="logsStatus" style="color:#666; font-size:0.95em;"></span>
+                            </div>
+
+                            <div class="table-container">
+                                <table id="auditLogsTable" style="width:100%; display:none;">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Email</th>
+                                            <th>Acción</th>
+                                            <th>Fecha / Hora</th>
+                                            <th>IP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="auditLogsTableBody"></tbody>
+                                </table>
+                                <div id="emptyAuditLogs" class="empty-state" style="text-align:center; padding:20px; display:none;">
+                                    <i class="fas fa-history"></i>
+                                    <p>No hay registros de acceso</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-section" id="configuracion-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-cogs"></i> Configuración del Sistema
+                    </h2>
+                    <div class="card">
+                        <h3><i class="fas fa-sliders-h"></i> Configuración General</h3>
+                        <p>Configuración del sistema de firma digital</p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-fingerprint"></i> Biometría</h3>
+                        <p id="biometricConfigStatus">Administra la huella registrada en este usuario.</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn" id="btnRegisterBiometricConfig" style="max-width: 260px;">
+                                <i class="fas fa-fingerprint"></i> Registrar huella
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btnDeleteBiometric" style="max-width: 260px;">
+                                <i class="fas fa-trash"></i> Eliminar biometría
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        const API_URL = 'http://localhost:5000/api';
+        let captchaToken = '';
+        let currentToken = localStorage.getItem('token');
+        let currentUser = null;
+        let documentos = [];
+        let currentCredentialId = null;  // Para almacenar credential_id de biometría
+        let dbHealthCheck = null;  // Para monitorear la BD
+
+        // ========== MONITOR DE SALUD DE LA BASE DE DATOS ==========
+
+        function startDatabaseMonitor() {
+            // Verificar salud de la BD cada 30 segundos
+            dbHealthCheck = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_URL}/health`);
+                    const result = await response.json();
+                    
+                    if (!result.success || response.status === 503) {
+                        console.warn('Atención BD desconectada, intentando reconectar...');
+                        // Mostrar notificación si está autenticado
+                        if (currentToken) {
+                            showNotification(' Reconectando a la base de datos...', 'warning');
+                        }
+                    } else {
+                        console.log(' BD conectada');
+                    }
+                } catch (err) {
+                    console.error('Error verificando salud de BD:', err);
+                }
+            }, 30000);  // Cada 30 segundos
+        }
+
+        function stopDatabaseMonitor() {
+            if (dbHealthCheck) {
+                clearInterval(dbHealthCheck);
+                dbHealthCheck = null;
+            }
+        }
+
+        // ========== FUNCIONALIDADES DE AUTENTICACIÓN ==========
+
+        // Función para mostrar notificaciones
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 300);
+            }, 4000);
+        }
+
+        // Función cuando el reCAPTCHA se completa
+        function captchaCompletado(token) {
+            captchaToken = token;
+            document.getElementById('captcha-error').style.display = 'none';
+        }
+
+        // Función cuando el reCAPTCHA expira
+        function captchaExpirado() {
+            captchaToken = '';
+            document.getElementById('captcha-error').style.display = 'block';
+            document.getElementById('captcha-error').textContent = 'reCAPTCHA expirado, por favor verifica de nuevo';
+        }
+
+        // Función cuando hay error en el reCAPTCHA
+        function captchaError() {
+            document.getElementById('captcha-error').style.display = 'block';
+            document.getElementById('captcha-error').textContent = 'Error en reCAPTCHA, por favor recarga la página';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showNotification('Por favor ingresa usuario y contrasena', 'error');
+                return;
+            }
+
+            if (!captchaToken) {
+                document.getElementById('captcha-error').style.display = 'block';
+                document.getElementById('captcha-error').textContent = 'Por favor completa el reCAPTCHA';
+                return;
+            }
+
+            const loginBtn = document.getElementById('loginBtn');
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+            loginBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const result = await response.json();
+
+                if (!result.success) {
+                    showNotification(result.message || 'Usuario o contrasena invalidos', 'error');
+                    return;
+                }
+
+                currentToken = result.token;
+                currentUser = result.user;
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('user', JSON.stringify(result.user));
+                aplicarPermisosRol(result.user);
+                
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('userDisplayName').textContent = result.user.nombre || result.user.Nombre || username;
+                document.getElementById('userDisplayRole').textContent = result.user.rol || '';
+                cargarDashboard();
+                try { showAuditLogsIfDirector(); } catch (err) { console.warn('showAuditLogsIfDirector error', err); }
+            } catch (error) {
+                showNotification('Error de conexion: ' + error.message, 'error');
+            } finally {
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
+        });
+        // ========== AUTENTICACIÓN BIOMÉTRICA CON WEBAUTHN ==========
+
+        function isWebAuthnSupported() {
+            return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && navigator.credentials.get);
+        }
+
+        function bufferToBase64Url(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            bytes.forEach(byte => binary += String.fromCharCode(byte));
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+
+        function base64UrlToBuffer(value) {
+            const padding = '='.repeat((4 - value.length % 4) % 4);
+            const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        async function registerBiometric() {
+            if (!currentToken) {
+                showNotification('Inicia sesion primero', 'error');
+                return;
+            }
+
+            if (!isWebAuthnSupported()) {
+                showNotification('Tu navegador no soporta biometría WebAuthn', 'error');
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const challenge = crypto.getRandomValues(new Uint8Array(32));
+            const userId = crypto.getRandomValues(new Uint8Array(16));
+
+            try {
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge,
+                        rp: { name: 'Firma Digital' },
+                        user: {
+                            id: userId,
+                            name: user.email || user.Email || user.username || 'usuario',
+                            displayName: user.nombre || user.Nombre || user.username || 'Usuario'
+                        },
+                        pubKeyCredParams: [
+                            { type: 'public-key', alg: -7 },
+                            { type: 'public-key', alg: -257 }
+                        ],
+                        authenticatorSelection: {
+                            // No forzamos lector de huella interno.
+                            // Así funciona con Windows Hello, PIN, Face ID o llave de seguridad.
+                            userVerification: 'preferred',
+                            residentKey: 'preferred',
+                            requireResidentKey: false
+                        },
+                        timeout: 60000,
+                        attestation: 'direct'
+                    }
+                });
+
+                const credentialId = credential.id || bufferToBase64Url(credential.rawId);
+                const attestationObject = bufferToBase64Url(credential.response.attestationObject);
+
+                const response = await fetch(`${API_URL}/biometric/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({
+                        credential_id: credentialId,
+                        attestation_object: attestationObject
+                    })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    currentCredentialId = credentialId;
+                    localStorage.setItem('credentialId', credentialId);
+                    showNotification(result.message || 'Huella registrada correctamente', 'success');
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                } else {
+                    showNotification(result.message || 'No se pudo registrar la huella', 'error');
+                }
+            } catch (error) {
+                showNotification('Registro biométrico cancelado o fallido: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteBiometricData() {
+            if (!currentToken) {
+                showNotification('Inicia sesion primero', 'error');
+                return;
+            }
+
+            if (!confirm('¿Seguro que quieres eliminar toda la biometría de este usuario?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/biometric`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    currentCredentialId = null;
+                    localStorage.removeItem('credentialId');
+                    showNotification(result.message || 'Biometría eliminada correctamente', 'success');
+                } else {
+                    showNotification(result.message || 'No se pudo eliminar la biometría', 'error');
+                }
+            } catch (error) {
+                showNotification('Error eliminando biometría', 'error');
+            }
+        }
+
+        document.getElementById('btnRegisterBiometricConfig').addEventListener('click', registerBiometric);
+        document.getElementById('btnDeleteBiometric').addEventListener('click', deleteBiometricData);
+
+        // ========== RECUPERACIÓN DE CONTRASEÑA ==========
+
+        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('loginFormContainer').style.display = 'none';
+            document.getElementById('recoveryFormContainer').style.display = 'block';
+        });
+
+        document.getElementById('backToLogin').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('recoveryFormContainer').style.display = 'none';
+            document.getElementById('loginFormContainer').style.display = 'block';
+        });
+
+        document.getElementById('btnRequestRecovery').addEventListener('click', async function() {
+            const email = document.getElementById('recovery-email').value;
+            
+            if (!email) {
+                showNotification('Por favor ingresa tu correo electrónico', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnRequestRecovery');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/password/recovery`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('OK ' + result.message + ' Revisa tu correo para el código de recuperación.', 'success');
+                    // No mostrar el token - se envía por email
+                    document.getElementById('tokenRecovery').style.display = 'block';
+                    if (result.debug_token) {
+                        document.getElementById('tokenDisplay').textContent = `Código de recuperación: ${result.debug_token}`;
+                        document.getElementById('token-input').value = result.debug_token;
+                    } else {
+                        document.getElementById('tokenDisplay').textContent = 'Código enviado al correo. Si no llega, revisa recovery_tokens.log.';
+                    }
+                } else {
+                    showNotification('Error ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error solicitando recuperación', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('btnResetPassword').addEventListener('click', async function() {
+            const token = document.getElementById('token-input').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-new-password').value;
+            
+            if (!token || !newPassword || !confirmPassword) {
+                showNotification('Por favor ingresa el token y confirma la nueva contraseña', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showNotification('Las contraseñas no coinciden', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnResetPassword');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restableciendo...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/password/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, new_password: newPassword })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    document.getElementById('recoveryFormContainer').style.display = 'none';
+                    document.getElementById('loginFormContainer').style.display = 'block';
+                    // Limpiar formulario
+                    document.getElementById('recovery-email').value = '';
+                    document.getElementById('token-input').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-new-password').value = '';
+                    document.getElementById('tokenRecovery').style.display = 'none';
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error restableciendo contraseña', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // ========== REGISTRO DE USUARIO ==========
+
+        document.getElementById('registerLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('loginFormContainer').style.display = 'none';
+            document.getElementById('registerFormContainer').style.display = 'block';
+        });
+
+        document.getElementById('backToLoginFromRegister').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('registerFormContainer').style.display = 'none';
+            document.getElementById('loginFormContainer').style.display = 'block';
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const userData = {
+                username: document.getElementById('regUsername').value.trim(),
+                password: document.getElementById('regPassword').value,
+                email: document.getElementById('regEmail').value.trim(),
+                nombre: document.getElementById('regNombre').value.trim(),
+                rol: document.getElementById('regRol').value,
+                curp: document.getElementById('regCurp').value.trim().toUpperCase(),
+                cargo_firma: document.getElementById('regCargoFirma').value.trim(),
+                ubicacion_firma: document.getElementById('regUbicacionFirma').value.trim()
+            };
+
+            if (!userData.username || !userData.password || !userData.email || !userData.nombre || !userData.curp || !userData.cargo_firma || !userData.ubicacion_firma) {
+                showNotification('Completa todos los campos del registro', 'error');
+                return;
+            }
+
+            if (userData.password.length < 10 || !/[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(userData.password)) {
+                showNotification('La contraseña debe tener mínimo 10 caracteres y un carácter especial', 'error');
+                return;
+            }
+
+            if (userData.password !== document.getElementById('regConfirmPassword').value) {
+                showNotification('Las contraseñas no coinciden', 'error');
+                return;
+            }
+
+            if (!/^[A-Z0-9]{18}$/.test(userData.curp)) {
+                showNotification('La CURP debe tener 18 caracteres alfanuméricos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Hacer login automático tras registro
+                    const loginResponse = await fetch(`${API_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: userData.username,
+                            password: userData.password
+                        })
+                    });
+                    
+                    const loginResult = await loginResponse.json();
+                    
+                    if (loginResult.success) {
+                        currentToken = loginResult.token;
+                        currentUser = loginResult.user;
+                        localStorage.setItem('token', loginResult.token);
+                        localStorage.setItem('user', JSON.stringify(loginResult.user));
+                        aplicarPermisosRol(loginResult.user);
+
+                        document.getElementById('registerFormContainer').style.display = 'none';
+                        document.getElementById('authScreen').style.display = 'none';
+                        document.getElementById('dashboard').style.display = 'block';
+                        document.getElementById('userDisplayName').textContent = loginResult.user.nombre || loginResult.user.Nombre || userData.username;
+                        document.getElementById('userDisplayRole').textContent = loginResult.user.rol || '';
+                        cargarDashboard();
+
+                        showNotification('OK Cuenta creada exitosamente.', 'success');
+                    } else {
+                        showNotification('Cuenta creada. Por favor inicia sesión.', 'success');
+                        document.getElementById('registerFormContainer').style.display = 'none';
+                        document.getElementById('loginFormContainer').style.display = 'block';
+                    }
+                    
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error registrando usuario', 'error');
+            }
+        });
+
+        // ========== VERIFICACIÓN DE FIRMAS ==========
+
+        document.getElementById('consultarFirmaForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const clave = document.getElementById('claveVerificacion').value.trim();
+            const resultadoDiv = document.getElementById('resultadoConsultaFirma');
+
+            if (!clave) {
+                showNotification('Ingresa una clave para verificar', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/firmas/consultar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clave })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const firma = result.firma || {};
+                    const documentoUrl = firma.tiene_documento ? `/documento-verificado/${encodeURIComponent(firma.codigo_verificacion)}` : '';
+                    resultadoDiv.innerHTML = `
+                        <div class="verificacion-resultado verificacion-exitosa">
+                            <i class="fas fa-check-circle"></i> Firma encontrada
+                            <div style="margin-top: 12px; font-weight: 400;">
+                                <p><strong>Documento:</strong> ${escapeHtml(firma.titulo || '')}</p>
+                                <p><strong>Fecha:</strong> ${escapeHtml(firma.fecha_firma || '')}</p>
+                                <p><strong>Firmante:</strong> ${escapeHtml(firma.firmante_nombre || '')}</p>
+                                <p><strong>Cargo:</strong> ${escapeHtml(firma.firmante_cargo || '')}</p>
+                                <p><strong>Código:</strong> ${escapeHtml(firma.codigo_verificacion || '')}</p>
+                                <p><strong>Hash:</strong> <span class="clave-valor">${escapeHtml(firma.hash_documento || '')}</span></p>
+                                ${documentoUrl ? `<a class="btn btn-secondary btn-sm" href="${documentoUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> Abrir documento</a>` : ''}
+                                ${documentoUrl ? `<iframe src="${documentoUrl}#toolbar=0&navpanes=0" style="width:100%; height:620px; border:1px solid #d1d5db; border-radius:6px; margin-top:14px; background:#f9fafb;"></iframe>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    showNotification('Firma encontrada correctamente', 'success');
+                } else {
+                    resultadoDiv.innerHTML = `
+                        <div class="verificacion-resultado verificacion-fallida">
+                            <i class="fas fa-exclamation-triangle"></i> ${result.message}
+                        </div>
+                    `;
+                    showNotification('No se encontró la firma', 'error');
+                }
+                resultadoDiv.style.display = 'block';
+            } catch (error) {
+                showNotification('Error consultando firma', 'error');
+            }
+        });
+
+        let qrScanStream = null;
+        let qrScanTimer = null;
+
+        function extraerClaveQr(valor) {
+            const texto = String(valor || '').trim();
+            if (!texto) return '';
+            try {
+                const url = new URL(texto);
+                const partes = url.pathname.split('/').filter(Boolean);
+                const verificarIndex = partes.indexOf('verificar');
+                if (verificarIndex >= 0 && partes[verificarIndex + 1]) {
+                    return decodeURIComponent(partes[verificarIndex + 1]);
+                }
+            } catch (error) {
+                // No era URL; se usa el texto completo.
+            }
+            return texto;
+        }
+
+        async function consultarClaveFirma(clave) {
+            document.getElementById('claveVerificacion').value = extraerClaveQr(clave);
+            document.getElementById('consultarFirmaForm').dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+
+        async function iniciarEscanerQr() {
+            const status = document.getElementById('qrScanStatus');
+            const video = document.getElementById('qrScanVideo');
+            const canvas = document.getElementById('qrScanCanvas');
+
+            try {
+                qrScanStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                video.srcObject = qrScanStream;
+                await video.play();
+
+                const detector = 'BarcodeDetector' in window ? new BarcodeDetector({ formats: ['qr_code'] }) : null;
+                document.getElementById('btnStartQrScan').disabled = true;
+                document.getElementById('btnStopQrScan').disabled = false;
+                status.textContent = 'Apunta la cámara al código QR.';
+
+                qrScanTimer = setInterval(async () => {
+                    if (!video.videoWidth || !video.videoHeight) return;
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    let valor = '';
+                    if (detector) {
+                        const codes = await detector.detect(canvas);
+                        valor = codes.length ? codes[0].rawValue : '';
+                    } else if (window.jsQR) {
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = window.jsQR(imageData.data, canvas.width, canvas.height);
+                        valor = code ? code.data : '';
+                    }
+
+                    if (valor) {
+                        detenerEscanerQr();
+                        status.textContent = 'QR detectado. Consultando firma...';
+                        consultarClaveFirma(valor);
+                    }
+                }, 450);
+            } catch (error) {
+                status.textContent = 'No se pudo abrir la cámara. Usa localhost, HTTPS y revisa permisos del navegador.';
+                showNotification('No se pudo abrir la cámara', 'error');
+            }
+        }
+
+        function detenerEscanerQr() {
+            if (qrScanTimer) {
+                clearInterval(qrScanTimer);
+                qrScanTimer = null;
+            }
+            if (qrScanStream) {
+                qrScanStream.getTracks().forEach(track => track.stop());
+                qrScanStream = null;
+            }
+            const video = document.getElementById('qrScanVideo');
+            video.pause();
+            video.srcObject = null;
+            document.getElementById('btnStartQrScan').disabled = false;
+            document.getElementById('btnStopQrScan').disabled = true;
+        }
+
+        document.getElementById('btnStartQrScan').addEventListener('click', iniciarEscanerQr);
+        document.getElementById('btnStopQrScan').addEventListener('click', detenerEscanerQr);
+
+        // ========== GESTIÓN DE DOCUMENTOS ==========
+
+        // ========== GESTIÓN DE DOCUMENTOS PDF ==========
+
+        let documentoSeleccionado = null;
+
+        document.getElementById('subirPDFForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!currentToken) {
+                showNotification('Debes iniciar sesión primero', 'error');
+                return;
+            }
+
+            const nombre = document.getElementById('pdf-nombre').value;
+            const archivo = document.getElementById('pdf-file').files[0];
+            const descripcion = document.getElementById('pdf-descripcion').value;
+
+            if (!nombre || !archivo) {
+                showNotification('Por favor completa los campos obligatorios', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('titulo', nombre);
+            formData.append('descripcion', descripcion);
+            formData.append('archivo', archivo);
+
+            const btnSubir = document.getElementById('btnSubirPDF');
+            const originalText = btnSubir.innerHTML;
+            btnSubir.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+            btnSubir.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/documentos/subir`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${currentToken}` },
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('OK PDF subido exitosamente', 'success');
+                    cargarDashboard();
+                    document.getElementById('subirPDFForm').reset();
+                } else {
+                    showNotification('Error ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error subiendo PDF: ' + error.message, 'error');
+            } finally {
+                btnSubir.innerHTML = originalText;
+                btnSubir.disabled = false;
+            }
+        });
+
+        // Función para cargar documentos disponibles usando jQuery
+function cargarDocumentosDisponibles() {
+    // Selección de elementos con jQuery
+    const $select = $('#documento-seleccionar');
+    const $emptyState = $('#emptyDocumentos');
+    const $table = $('#documentosTable');
+    const $tableBody = $('#documentosTableBody');
+    
+    // Limpiar elementos existentes
+    $select.empty();
+    $select.append('<option value="">-- Selecciona un documento --</option>');
+    $tableBody.empty();
+    
+    // Estructura de control condicional
+    if (documentos.length === 0) {
+        $emptyState.show();
+        $table.hide();
+        return;
+    }
+    
+    $emptyState.hide();
+    $table.show();
+    
+    // Estructura de control iterativa (ciclo forEach con jQuery)
+    $.each(documentos, function(index, documento) {
+        // Creación dinámica de opciones para el select
+        const estadoTexto = documento.firmado ? 'FIRMADO' : ' PENDIENTE';
+        const optionText = `${documento.nombre} (${documento.fecha || 'Sin fecha'}) - ${estadoTexto}`;
+        $select.append(`<option value="${documento.id}">${optionText}</option>`);
+        
+        // Creacion dinamica de filas para la tabla
+        const estadoClass = documento.firmado ? 'status-active' : 'status-pending';
+        const estadoLabel = documento.firmado ? 'Firmado' : 'Pendiente';
+
+        const row = document.createElement('tr');
+        row.innerHTML =
+            '<td><div class="doc-cell">' +
+                '<div class="doc-icon"><i class="fas fa-file-pdf"></i></div>' +
+                '<div><strong>' + escapeHtml(documento.nombre || '') + '</strong>' +
+                '<br><small>' + escapeHtml(documento.descripcion || 'Sin descripcion') + '</small></div>' +
+            '</div>' +
+            '</td>' +
+            '<td>' + escapeHtml(documento.fecha || 'Sin fecha') + '</td>' +
+            '<td>' + escapeHtml(documento.tamano || 'N/A') + '</td>' +
+            '<td><span class="status ' + estadoClass + '">' + estadoLabel + '</span></td>';
+
+        const acciones = document.createElement('td');
+
+        const btnVer = document.createElement('button');
+        btnVer.className = 'btn-action btn-view';
+        btnVer.type = 'button';
+        btnVer.title = 'Ver documento';
+        btnVer.innerHTML = '<i class="fas fa-eye"></i>';
+        btnVer.addEventListener('click', function() {
+            verDocumento(documento.id);
+        });
+        acciones.appendChild(btnVer);
+
+        const btnFirma = document.createElement('button');
+        btnFirma.type = 'button';
+        btnFirma.className = documento.firmado ? 'btn-action btn-verify' : 'btn-action btn-edit';
+        btnFirma.title = documento.firmado ? 'Ver firma' : 'Firmar documento';
+        btnFirma.innerHTML = documento.firmado ? '<i class="fas fa-check-shield"></i>' : '<i class="fas fa-signature"></i>';
+        btnFirma.addEventListener('click', function() {
+            if (documento.firmado) {
+                verFirma(documento.id);
+            } else {
+                seleccionarParaFirmar(documento.id);
+            }
+        });
+        acciones.appendChild(btnFirma);
+
+        const btnEliminar = document.createElement('button');
+        btnEliminar.className = 'btn-action btn-delete';
+        btnEliminar.type = 'button';
+        btnEliminar.title = 'Eliminar documento';
+        btnEliminar.innerHTML = '<i class="fas fa-trash"></i>';
+        btnEliminar.addEventListener('click', function() {
+            eliminarDocumento(documento.id);
+        });
+        acciones.appendChild(btnEliminar);
+
+        row.appendChild(acciones);
+        $tableBody.append(row);
+    });
+}
+
+        async function verDocumento(documentoId) {
+        const documento = documentos.find(doc => doc.id === documentoId);
+
+        if (!documento) {
+        showNotification('Documento no encontrado', 'error');
+        return;
+        }
+
+        if (!documento.firmado) {
+        showNotification('Este documento todavía no está firmado.', 'warning');
+        return;
+        }
+
+         await abrirDocumentoFirmado(documentoId);
+}
+
+        async function verFirma(documentoId) {
+        const documento = documentos.find(doc => doc.id === documentoId);
+
+        if (!documento) {
+            showNotification('Documento no encontrado', 'error');
+            return;
+        }
+
+        if (!documento.firmado) {
+            showNotification('Este documento aún no está firmado', 'warning');
+            return;
+        }
+
+        await abrirDocumentoFirmado(documentoId);
+    }
+
+        async function abrirDocumentoFirmado(documentoId) {
+            if (!currentToken) {
+                showNotification('Debes iniciar sesión primero', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/documentos/${documentoId}/descargar-firmado`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.message || 'No se pudo abrir el documento firmado');
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                window.open(url, '_blank');
+
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 60000);
+
+            } catch (error) {
+                showNotification(error.message || 'Error abriendo el documento firmado', 'error');
+            }
+        }
+
+        function firmarDocumento(documentoId) {
+            const documento = documentos.find(doc => doc.id === documentoId);
+            if (documento) {
+                mostrarFormularioFirma(documentoId);
+            }
+        }
+
+        function seleccionarParaFirmar(documentoId) {
+            mostrarFormularioFirma(documentoId);
+        }
+
+        async function eliminarDocumento(documentoId) {
+            if (!currentToken) {
+                showNotification('Debes iniciar sesión primero', 'error');
+                return;
+            }
+
+            if (!confirm('¿Estás seguro de que quieres eliminar este documento y sus firmas QR?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/documentos/${documentoId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const result = await response.json();
+
+                if (!result.success) {
+                    showNotification(result.message || 'No se pudo eliminar el documento', 'error');
+                    return;
+                }
+
+                documentos = documentos.filter(doc => doc.id !== documentoId);
+                cargarDocumentosDisponibles();
+                cargarDashboard();
+                showNotification(result.message || 'Documento eliminado correctamente', 'success');
+            } catch (error) {
+                showNotification('Error eliminando documento', 'error');
+            }
+        }
+
+        // ========== GENERACIÓN DE DOCUMENTOS OFICIALES ==========
+
+        let documentoOficialTexto = '';
+        let documentoOficialTitulo = '';
+
+        document.getElementById('oficial-fecha').valueAsDate = new Date();
+
+        function sincronizarFirmanteOficial() {
+            document.getElementById('oficial-firmante').value = currentUser?.nombre || currentUser?.Nombre || '';
+            document.getElementById('oficial-cargo').value = currentUser?.cargo_firma || currentUser?.rol || '';
+        }
+
+        function generarFolioOficial() {
+            const tipo = getFieldValue('oficial-tipo') || 'Documento';
+            const prefijo = tipo
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .split(/\s+/)
+                .map(palabra => palabra[0] || '')
+                .join('')
+                .toUpperCase()
+                .slice(0, 5) || 'DOC';
+            const fecha = new Date();
+            const fechaClave = `${fecha.getFullYear()}${String(fecha.getMonth() + 1).padStart(2, '0')}${String(fecha.getDate()).padStart(2, '0')}`;
+            const horaClave = `${String(fecha.getHours()).padStart(2, '0')}${String(fecha.getMinutes()).padStart(2, '0')}${String(fecha.getSeconds()).padStart(2, '0')}`;
+            return `${prefijo}-${fechaClave}-${horaClave}`;
+        }
+
+        function prepararDatosOficiales() {
+            sincronizarFirmanteOficial();
+            if (!getFieldValue('oficial-folio')) {
+                document.getElementById('oficial-folio').value = generarFolioOficial();
+            }
+            if (!getFieldValue('oficial-lugar')) {
+                document.getElementById('oficial-lugar').value = currentUser?.ubicacion_firma || 'México';
+            }
+            if (!getFieldValue('oficial-fecha')) {
+                document.getElementById('oficial-fecha').valueAsDate = new Date();
+            }
+            if (!getFieldValue('oficial-destinatario')) {
+                document.getElementById('oficial-destinatario').value = 'A QUIEN CORRESPONDA';
+            }
+            if (!getFieldValue('oficial-asunto')) {
+                document.getElementById('oficial-asunto').value = getFieldValue('oficial-tipo');
+            }
+        }
+
+        function configurarCamposOficiales() {
+            document.getElementById('grupo-alumno').style.display = 'block';
+            document.getElementById('grupo-tutor').style.display = 'block';
+            document.getElementById('oficial-alumno').required = true;
+            document.getElementById('oficial-tutor').required = false;
+        }
+
+        async function generarDocumentoOficialIA() {
+            if (!currentToken) {
+                showNotification('Debes iniciar sesión primero', 'error');
+                return;
+            }
+
+            prepararDatosOficiales();
+            configurarCamposOficiales();
+            const btn = document.getElementById('btnGenerarOficialIA');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redactando...';
+            btn.disabled = true;
+
+            try {
+                const payload = {
+                    tipo: getFieldValue('oficial-tipo'),
+                    destinatario: getFieldValue('oficial-destinatario') || 'A QUIEN CORRESPONDA',
+                    asunto: getFieldValue('oficial-asunto') || getFieldValue('oficial-tipo'),
+                    alumno: getFieldValue('oficial-alumno'),
+                    tutor: getFieldValue('oficial-tutor'),
+                    contexto: getFieldValue('oficial-cuerpo'),
+                    fundamento: getFieldValue('oficial-fundamento'),
+                    tono: getFieldValue('oficial-tono')
+                };
+
+                if (!payload.alumno) {
+                    showNotification('Ingresa el nombre del alumno', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${API_URL}/documentos-oficiales/generar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('oficial-cuerpo').value = result.contenido;
+                    prepararDatosOficiales();
+                    generarDocumentoOficial();
+                    showNotification('Documento redactado automáticamente', 'success');
+                } else {
+                    showNotification(result.message || 'No se pudo generar el documento', 'error');
+                }
+            } catch (error) {
+                showNotification('Error generando documento con IA', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('documentoOficialForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            generarDocumentoOficialIA();
+        });
+
+        document.getElementById('oficial-tipo').addEventListener('change', configurarCamposOficiales);
+        configurarCamposOficiales();
+
+        document.getElementById('btnLimpiarOficial').addEventListener('click', function() {
+            document.getElementById('documentoOficialForm').reset();
+            document.getElementById('oficial-fecha').valueAsDate = new Date();
+            document.getElementById('oficial-folio').value = '';
+            documentoOficialTexto = '';
+            documentoOficialTitulo = '';
+            prepararDatosOficiales();
+            document.getElementById('oficialPreview').innerHTML = '<p style="color: #777; text-align: center;">Completa el formulario y genera la vista previa.</p>';
+            setOficialActionsEnabled(false);
+        });
+
+        document.getElementById('btnDescargarOficial').addEventListener('click', function() {
+            if (!documentoOficialTexto) return;
+            const blob = new Blob([documentoOficialTexto], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${sanitizeFilename(documentoOficialTitulo)}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('btnCopiarOficial').addEventListener('click', function() {
+            if (!documentoOficialTexto) return;
+            navigator.clipboard.writeText(documentoOficialTexto)
+                .then(() => showNotification('Documento copiado al portapapeles', 'success'))
+                .catch(() => showNotification('No se pudo copiar el documento', 'error'));
+        });
+
+        document.getElementById('btnGuardarOficial').addEventListener('click', async function() {
+            if (!currentToken) {
+                showNotification('Debes iniciar sesión primero', 'error');
+                return;
+            }
+            if (!documentoOficialTexto) return;
+
+            const btn = document.getElementById('btnGuardarOficial');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
+            try {
+                const blob = new Blob([documentoOficialTexto], { type: 'text/plain;charset=utf-8' });
+                const file = new File([blob], `${sanitizeFilename(documentoOficialTitulo)}.txt`, { type: 'text/plain' });
+                const formData = new FormData();
+                formData.append('titulo', documentoOficialTitulo);
+                formData.append('descripcion', 'Documento oficial generado desde el sistema');
+                formData.append('archivo', file);
+
+                const response = await fetch(`${API_URL}/documentos/subir`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${currentToken}` },
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Documento oficial guardado en documentos', 'success');
+                    cargarDashboard();
+                } else {
+                    showNotification(result.message || 'No se pudo guardar el documento', 'error');
+                }
+            } catch (error) {
+                showNotification('Error guardando documento oficial', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        function generarDocumentoOficial() {
+            prepararDatosOficiales();
+            const tipo = getFieldValue('oficial-tipo');
+            const folio = getFieldValue('oficial-folio');
+            const lugar = getFieldValue('oficial-lugar') || 'México';
+            const fecha = getFieldValue('oficial-fecha');
+            const destinatario = getFieldValue('oficial-destinatario');
+            const asunto = getFieldValue('oficial-asunto');
+            const cuerpo = getFieldValue('oficial-cuerpo');
+            const fundamento = getFieldValue('oficial-fundamento');
+            const firmante = getFieldValue('oficial-firmante');
+            const cargo = getFieldValue('oficial-cargo');
+
+            documentoOficialTitulo = `${tipo} ${folio} - ${asunto}`;
+            documentoOficialTexto = [
+                'GOBIERNO DEL ESTADO DE MEXICO',
+                'SECRETARIA DE EDUCACION',
+                'SUBSECRETARIA DE EDUCACION BASICA',
+                tipo.toUpperCase(),
+                `Folio: ${folio}`,
+                `${lugar}, ${formatOfficialDate(fecha)}`,
+                '',
+                destinatario,
+                'PRESENTE',
+                '',
+                `Asunto: ${asunto}`,
+                '',
+                cuerpo,
+                fundamento ? `\nFundamento o referencia:\n${fundamento}` : '',
+                '',
+                'Atentamente,',
+                '',
+                firmante,
+                cargo
+            ].filter(Boolean).join('\n');
+
+            document.getElementById('oficialPreview').innerHTML = `
+                <div class="oficial-page oficial-page-edomex">
+                    <div class="oficial-gob-header">
+                        <div>
+                            <span class="oficial-gob-title">Gobierno del Estado de México</span>
+                            <span>Secretaría de Educación</span>
+                            <span>Subsecretaría de Educación Básica</span>
+                        </div>
+                        <div class="oficial-folio">
+                            <strong>${escapeHtml(tipo.toUpperCase())}</strong>
+                            <span>Folio: ${escapeHtml(folio)}</span>
+                        </div>
+                    </div>
+                    <div class="oficial-meta">
+                        <span>${escapeHtml(lugar)}, Estado de México</span>
+                        <span>${escapeHtml(formatOfficialDate(fecha))}</span>
+                    </div>
+                    <p class="oficial-addressee">
+                        <strong>${escapeHtml(destinatario)}</strong><br>
+                        PRESENTE
+                    </p>
+                    <p class="oficial-subject"><strong>Asunto:</strong> ${escapeHtml(asunto)}</p>
+                    <div class="oficial-body">${escapeHtml(cuerpo).replace(/\n/g, '<br>')}</div>
+                    ${fundamento ? `<p><strong>Fundamento o referencia:</strong><br>${escapeHtml(fundamento).replace(/\n/g, '<br>')}</p>` : ''}
+                    <div class="oficial-signature">
+                        <p>Atentamente,</p>
+                        <div class="oficial-sign-line"></div>
+                        <strong>${escapeHtml(firmante)}</strong>
+                        <span>${escapeHtml(cargo)}</span>
+                    </div>
+                    <div class="oficial-footer">
+                        Documento escolar generado para firma digital y validación institucional.
+                    </div>
+                </div>
+            `;
+            setOficialActionsEnabled(true);
+            showNotification('Vista previa generada', 'success');
+        }
+
+        function getFieldValue(id) {
+            return document.getElementById(id).value.trim();
+        }
+
+        function setOficialActionsEnabled(enabled) {
+            document.getElementById('btnDescargarOficial').disabled = !enabled;
+            document.getElementById('btnCopiarOficial').disabled = !enabled;
+            document.getElementById('btnGuardarOficial').disabled = !enabled;
+        }
+
+        function sanitizeFilename(value) {
+            return String(value || 'documento-oficial')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9_-]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 90) || 'documento-oficial';
+        }
+
+        function formatOfficialDate(value) {
+            if (!value) return new Date().toLocaleDateString();
+            const date = new Date(`${value}T00:00:00`);
+            return isNaN(date) ? value : date.toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // ========== FUNCIONALIDADES DEL DASHBOARD ==========
+
+        async function cargarDashboard() {
+            if (!currentToken) return;
+
+            await Promise.all([
+                cargarResumenDashboard(),
+                cargarDocumentosDelServidor()
+            ]);
+        }
+
+        async function cargarResumenDashboard() {
+            try {
+                const response = await fetch(`${API_URL}/dashboard/resumen`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+
+                if (!response.ok) {
+                    console.warn('No se pudo cargar el resumen del dashboard:', response.status);
+                    return;
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    console.warn('Resumen inválido:', result);
+                    return;
+                }
+
+                renderDashboardStats(result.stats || {});
+                renderActividadReciente(result.actividad || []);
+                renderDocumentosFirmados(result.documentos_firmados || []);
+                renderUsuarios(result.usuarios || []);
+            } catch (error) {
+                console.error('Error cargando dashboard:', error);
+            }
+        }
+
+        function renderDashboardStats(stats) {
+            document.getElementById('totalFirmas').textContent = stats.total_firmas || 0;
+            document.getElementById('documentosPendientes').textContent = stats.documentos_pendientes || 0;
+            document.getElementById('usuariosActivos').textContent = stats.usuarios_activos || 0;
+            document.getElementById('firmasHoy').textContent = stats.firmas_hoy || 0;
+        }
+
+        function renderActividadReciente(actividad) {
+            const tbody = document.getElementById('activityTableBody');
+            tbody.innerHTML = '';
+
+            if (!actividad.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-inbox" style="font-size: 48px; color: #E2E8F0; margin-bottom: 15px;"></i>
+                            <p>No hay actividad reciente</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            actividad.forEach(item => {
+                const fecha = formatDateTime(item.fecha_firma);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(item.titulo || 'Documento sin título')}</td>
+                    <td>${escapeHtml(fecha)}</td>
+                    <td>${escapeHtml(item.algoritmo_firma || 'SHA256-RSA')}</td>
+                    <td><span class="status status-active">${escapeHtml(item.estado || 'Firmado')}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderDocumentosFirmados(firmados) {
+            const empty = document.getElementById('emptyDocumentosFirmados');
+            const table = document.getElementById('documentosFirmadosTable');
+            const tbody = document.getElementById('documentosFirmadosTableBody');
+            tbody.innerHTML = '';
+
+            if (!firmados.length) {
+                empty.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+
+            firmados.forEach(doc => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(doc.titulo || 'Documento sin título')}</td>
+                    <td>
+                        ${escapeHtml(doc.firmante_nombre || doc.firmado_por || 'Usuario')}
+                        ${doc.firmante_cargo ? `<br><small>${escapeHtml(doc.firmante_cargo)}</small>` : ''}
+                    </td>
+                    <td>${escapeHtml(formatDateTime(doc.fecha_firma))}</td>
+                    <td>
+                        <span class="status status-active">${escapeHtml(doc.estado || 'Firmado')}</span>
+                        ${doc.qr_code ? `<br><img class="qr-mini" src="${doc.qr_code}" alt="QR">` : ''}
+                        ${doc.ruta_archivo_firmado ? `
+                        <br>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="abrirDocumentoFirmado(${Number(doc.id)})">
+                            <i class="fas fa-eye"></i> Ver firmado
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="descargarDocumentoFirmado(${Number(doc.id)})">
+                            <i class="fas fa-download"></i> Descargar firmado
+                        </button>
+                    ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function descargarDocumentoFirmado(documentoId) {
+            if (!currentToken) {
+                showNotification('Debes iniciar sesión', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/documentos/${documentoId}/descargar-firmado`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.message || 'No se pudo descargar el documento');
+                }
+
+                const blob = await response.blob();
+                const disposition = response.headers.get('Content-Disposition') || '';
+                const filenameMatch = disposition.match(/filename="?([^"]+)"?/i);
+                const filename = filenameMatch ? filenameMatch[1] : `documento_${documentoId}_firmado.pdf`;
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                showNotification(error.message || 'Error descargando documento firmado', 'error');
+            }
+        }
+
+        function renderUsuarios(usuarios) {
+            const empty = document.getElementById('emptyUsuarios');
+            const container = document.getElementById('usuariosTableContainer');
+            const tbody = document.getElementById('usuariosTableBody');
+            tbody.innerHTML = '';
+
+            if (!usuarios.length) {
+                empty.style.display = 'block';
+                container.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.style.display = 'block';
+
+            usuarios.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(user.nombre || user.usuario || 'Usuario')}</td>
+                    <td>${escapeHtml(user.email || '')}</td>
+                    <td>${escapeHtml(user.rol || '')}</td>
+                    <td><span class="status status-active">Activo</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatDateTime(value) {
+            if (!value) return 'Sin fecha';
+            const date = new Date(value);
+            return isNaN(date) ? String(value) : date.toLocaleString();
+        }
+
+        async function cargarDocumentosDelServidor() {
+            try {
+                // Primero intenta cargar solo los documentos pendientes (para la tabla de Gestión de Firma)
+                const response = await fetch(`${API_URL}/documentos/listar-para-firmar`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error(' Error al cargar documentos:', response.status);
+                    // Fallback a la ruta anterior si la nueva falla
+                    return cargarDocumentosDelServidorLegacy();
+                }
+
+                const result = await response.json();
+                console.log(' Respuesta del servidor (nuevos documentos):', result);
+                
+                if (result.success && result.documentos && Array.isArray(result.documentos)) {
+                    documentos = result.documentos.map(doc => ({
+                        id: doc.id,
+                        nombre: doc.titulo,
+                        fecha: new Date(doc.fecha_subida).toLocaleDateString(),
+                        tamano: doc.tamano_formateado || doc['tamaño_formateado'] || doc['tamaño_formateado'] || 'N/A',
+                        estado: doc.estado || 'Pendiente',
+                        firmado: String(doc.estado || '').toLowerCase() === 'firmado',
+                        descripcion: doc.descripcion || '',
+                        contenido: doc.titulo
+                    }));
+                    
+                    console.log(' Documentos procesados:', documentos);
+                    cargarDocumentosDisponibles();
+                } else {
+                    console.warn(' Respuesta inválida:', result);
+                    documentos = [];
+                    cargarDocumentosDisponibles();
+                }
+            } catch (error) {
+                console.error(' Error cargando documentos:', error);
+                // Si falla, usa fallback
+                cargarDocumentosDelServidorLegacy();
+            }
+        }
+
+        // Función de fallback para cargar todos los documentos (antigua ruta)
+        async function cargarDocumentosDelServidorLegacy() {
+            try {
+                const response = await fetch(`${API_URL}/documentos/listar`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) return;
+
+                const result = await response.json();
+                
+                if (result.success && result.documentos && Array.isArray(result.documentos)) {
+                    documentos = result.documentos.map(doc => ({
+                        id: doc.id,
+                        nombre: doc.titulo,
+                        fecha: new Date(doc.fecha_subida).toLocaleDateString(),
+                        tamano: doc.tamano ? (doc.tamano / 1024).toFixed(2) + ' KB' : (doc['tamaño'] ? (doc['tamaño'] / 1024).toFixed(2) + ' KB' : (doc['tamaño'] ? (doc['tamaño'] / 1024).toFixed(2) + ' KB' : 'N/A')),
+                        estado: doc.estado || 'Pendiente',
+                        firmado: String(doc.estado || '').toLowerCase() === 'firmado',
+                        descripcion: doc.descripcion || '',
+                        contenido: doc.titulo
+                    }));
+                    
+                    cargarDocumentosDisponibles();
+                }
+            } catch (error) {
+                console.error('Atención Error en fallback:', error);
+            }
+        }
+
+        // ========== NAVEGACIÓN Y OTROS ==========
+
+        function limpiarEstadoVisualSesion() {
+            try { detenerEscanerQr(); } catch (error) {}
+            documentos = [];
+            documentoSeleccionado = null;
+            documentoOficialTexto = '';
+            documentoOficialTitulo = '';
+            currentUser = null;
+
+            document.querySelectorAll('form').forEach(form => form.reset());
+            document.getElementById('documentosTableBody').innerHTML = '';
+            document.getElementById('documentosFirmadosTableBody').innerHTML = '';
+            document.getElementById('activityTableBody').innerHTML = '';
+            document.getElementById('usuariosTableBody').innerHTML = '';
+            document.getElementById('auditLogsTableBody').innerHTML = '';
+            document.getElementById('clavesGeneradasContainer').style.display = 'none';
+            document.getElementById('qrFirmaContainer').style.display = 'none';
+            document.getElementById('firmarDocumentoCard').style.display = 'none';
+            document.getElementById('resultadoConsultaFirma').style.display = 'none';
+            document.getElementById('resultadoConsultaFirma').innerHTML = '';
+            document.getElementById('oficialPreview').innerHTML = '<p style="color: #777; text-align: center;">Completa el formulario y genera la vista previa.</p>';
+            document.getElementById('emptyDocumentos').style.display = 'block';
+            document.getElementById('documentosTable').style.display = 'none';
+            document.getElementById('emptyDocumentosFirmados').style.display = 'block';
+            document.getElementById('documentosFirmadosTable').style.display = 'none';
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('dashboard-section').classList.add('active');
+            document.querySelector('[data-target="dashboard-section"]').classList.add('active');
+            setOficialActionsEnabled(false);
+            document.getElementById('oficial-fecha').valueAsDate = new Date();
+            configurarCamposOficiales();
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            // Detener monitor de BD
+            stopDatabaseMonitor();
+            
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('credentialId');
+            currentToken = null;
+            currentCredentialId = null;
+            limpiarEstadoVisualSesion();
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            
+            if (typeof grecaptcha !== 'undefined') {
+                grecaptcha.reset();
+            }
+            captchaToken = '';
+            
+            showNotification('Sesión cerrada exitosamente', 'success');
+        });
+
+        // Navegación del sidebar
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                
+                contentSections.forEach(section => section.classList.remove('active'));
+                
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+        
+        // Mostrar/ocultar contraseña en todos los campos tipo password
+        function inicializarPasswordToggles() {
+            const passwordInputs = document.querySelectorAll('input[type="password"], input[data-password-field="true"]');
+
+            passwordInputs.forEach((input) => {
+                input.dataset.passwordField = 'true';
+                const group = input.closest('.form-group') || input.parentElement;
+                if (!group) return;
+
+                group.classList.add('password-field');
+
+                let toggle = group.querySelector(`[data-toggle-password="${input.id}"]`);
+                if (!toggle) {
+                    toggle = document.createElement('button');
+                    toggle.type = 'button';
+                    toggle.className = 'password-toggle';
+                    toggle.setAttribute('data-toggle-password', input.id);
+                    toggle.setAttribute('aria-label', 'Mostrar contraseña');
+                    toggle.innerHTML = '<i class="far fa-eye"></i>';
+                    input.insertAdjacentElement('afterend', toggle);
+                }
+
+                if (toggle.tagName.toLowerCase() !== 'button') {
+                    toggle.setAttribute('role', 'button');
+                    toggle.setAttribute('tabindex', '0');
+                    toggle.setAttribute('aria-label', 'Mostrar contraseña');
+                }
+
+                toggle.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    const isHidden = input.type === 'password';
+                    input.type = isHidden ? 'text' : 'password';
+                    this.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                    icon.classList.toggle('fa-eye', !isHidden);
+                    icon.classList.toggle('fa-eye-slash', isHidden);
+                });
+            });
+        }
+
+        inicializarPasswordToggles();
+
+        // Función para copiar claves al portapapeles
+        function copiarClave(idElemento) {
+            const elemento = document.getElementById(idElemento);
+            const texto = elemento.textContent;
+            
+            navigator.clipboard.writeText(texto)
+                .then(() => {
+                    showNotification('Texto copiado al portapapeles', 'success');
+                })
+                .catch(err => {
+                    showNotification('Error al copiar el texto', 'error');
+                });
+        }
+
+        // Verificar si hay un token al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Iniciar monitor de BD
+            startDatabaseMonitor();
+            
+            if (currentToken) {
+                // Cargar credential_id si existe
+                currentCredentialId = localStorage.getItem('credentialId');
+                
+                // Verificar token con el backend
+                fetch(`${API_URL}/user/profile`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        currentUser = result.user;
+                        localStorage.setItem('user', JSON.stringify(result.user));
+                        aplicarPermisosRol(result.user);
+                        document.getElementById('authScreen').style.display = 'none';
+                        document.getElementById('dashboard').style.display = 'block';
+                        document.getElementById('userDisplayName').textContent = result.user.nombre;
+                        document.getElementById('userDisplayRole').textContent = result.user.rol;
+                        cargarDashboard();
+                        try { showAuditLogsIfDirector(); } catch(e) { console.warn('showAuditLogsIfDirector error', e); }
+                    } else {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('credentialId');
+                        localStorage.removeItem('user');
+                        currentToken = null;
+                    }
+                })
+                .catch(() => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('credentialId');
+                    localStorage.removeItem('user');
+                    currentToken = null;
+                });
+            }
+        });
+
+        // ========== FIRMAR DOCUMENTOS ==========
+
+        function mostrarFormularioFirma(documentoId) {
+            console.log(' Mostrando formulario para documento:', documentoId);
+            const documento = documentos.find(d => d.id === documentoId);
+            if (!documento) {
+                showNotification('Error Documento no encontrado', 'error');
+                return;
+            }
+
+            if (documento.estado === 'Firmado') {
+                showNotification('Atención Este documento ya está firmado', 'warning');
+                return;
+            }
+
+            documentoSeleccionado = documento;
+            document.getElementById('docNombreFirma').textContent = documento.nombre;
+            document.getElementById('docTamanoFirma').textContent = documento.tamano || 'N/A';
+            document.getElementById('firmarDocumentoCard').style.display = 'block';
+            document.getElementById('firmarDocumentoForm').reset();
+            document.getElementById('firmante-nombre').value = currentUser?.nombre || currentUser?.Nombre || '';
+            document.getElementById('firmante-curp').value = currentUser?.curp || '';
+            document.getElementById('firmante-cargo').value = currentUser?.cargo_firma || currentUser?.rol || '';
+            document.getElementById('ubicacion-firma').value = currentUser?.ubicacion_firma || '';
+            document.getElementById('perfilFirmaTexto').textContent = [
+                currentUser?.nombre || currentUser?.Nombre || 'Sin nombre',
+                currentUser?.cargo_firma || currentUser?.rol || 'Sin cargo',
+                currentUser?.ubicacion_firma || 'Sin ubicación'
+            ].join(' · ');
+            
+            // Scroll al formulario de firma
+            document.getElementById('firmarDocumentoCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function aplicarPermisosRol(user) {
+            const rol = String(user?.rol || user?.Rol || '').trim().toLowerCase();
+            const usuariosNav = document.querySelector('[data-target="usuarios-section"]');
+            const usuariosSection = document.getElementById('usuarios-section');
+            const puedeVerUsuarios = rol === 'director';
+
+            if (usuariosNav) usuariosNav.style.display = puedeVerUsuarios ? '' : 'none';
+            try { sincronizarFirmanteOficial(); } catch (error) {}
+            if (!puedeVerUsuarios && usuariosSection) {
+                usuariosSection.classList.remove('active');
+                if (usuariosNav?.classList.contains('active')) {
+                    usuariosNav.classList.remove('active');
+                    document.querySelector('[data-target="dashboard-section"]')?.classList.add('active');
+                    document.getElementById('dashboard-section')?.classList.add('active');
+                }
+            }
+        }
+
+        function cancelarFirmaDocumento() {
+            document.getElementById('firmarDocumentoCard').style.display = 'none';
+            document.getElementById('firmarDocumentoForm').reset();
+            documentoSeleccionado = null;
+        }
+
+        function mostrarResultadoFirma(result) {
+            document.getElementById('clavePublicaTexto').textContent = result.clave_publica || '';
+            document.getElementById('clavePrivadaTexto').textContent = '*** PROTEGIDA ***';
+            document.getElementById('hashDocumentoTexto').textContent = result.hash_documento || '';
+            document.getElementById('firmaDigitalTexto').textContent = result.firma_digital || '';
+
+            let qrContainer = document.getElementById('qrFirmaContainer');
+            qrContainer.style.display = 'block';
+
+            qrContainer.innerHTML = `
+                <div class="clave-label">Código QR de verificación:</div>
+                <div class="qr-firma-box">
+                    ${result.qr_code ? `<img src="${result.qr_code}" alt="Código QR de verificación">` : ''}
+                    <div>
+                        <strong>Código:</strong>
+                        <div class="clave-valor">${escapeHtml(result.codigo_verificacion || 'N/A')}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('clavesGeneradasContainer').style.display = 'block';
+            document.getElementById('clavesGeneradasContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('firmarDocumentoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!currentToken || !documentoSeleccionado) {
+                showNotification('Error: debes seleccionar un documento', 'error');
+                return;
+            }
+
+            const razon = document.getElementById('razon-firma').value;
+            const firmanteNombre = document.getElementById('firmante-nombre').value.trim();
+            const firmanteCurp = document.getElementById('firmante-curp').value.trim().toUpperCase();
+            const firmanteCargo = document.getElementById('firmante-cargo').value.trim();
+            const ubicacion = document.getElementById('ubicacion-firma').value;
+            const passwordFirma = document.getElementById('password-firma').value;
+
+            if (!razon || !firmanteNombre || !firmanteCurp || !firmanteCargo || !ubicacion) {
+                showNotification('Tu usuario no tiene completos los datos de firma. Crea el usuario con CURP, cargo y ubicación.', 'error');
+                return;
+            }
+
+            if (!passwordFirma) {
+                showNotification('Ingresa tu contraseña para autorizar la firma', 'error');
+                return;
+            }
+
+            if (!/^[A-Z0-9]{18}$/.test(firmanteCurp)) {
+                showNotification('La CURP debe tener 18 caracteres alfanuméricos', 'error');
+                return;
+            }
+
+            const btnFirmar = document.getElementById('btnFirmarDocumento');
+            const originalFirmarText = btnFirmar.innerHTML;
+            btnFirmar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Firmando...';
+            btnFirmar.disabled = true;
+
+            let metodoVerificacion = 'password';
+            let biometricVerified = false;
+            let credentialId = currentCredentialId || localStorage.getItem('credentialId');
+
+            try {
+                // Primero intenta WebAuthn si el navegador/equipo lo soporta y hay credencial guardada.
+                // Si no hay lector/Windows Hello/llave de seguridad, cae automáticamente a contraseña.
+                if (isWebAuthnSupported() && credentialId) {
+                    showNotification('Autoriza con biometría, Windows Hello o llave de seguridad...', 'info');
+                    const challenge = new Uint8Array(32);
+                    crypto.getRandomValues(challenge);
+                    const assertion = await navigator.credentials.get({
+                        publicKey: {
+                            challenge: challenge,
+                            allowCredentials: [{
+                                type: 'public-key',
+                                id: base64UrlToBuffer(credentialId)
+                            }],
+                            timeout: 60000,
+                            userVerification: 'preferred'
+                        }
+                    });
+
+                    if (assertion) {
+                        metodoVerificacion = 'fingerprint';
+                        biometricVerified = true;
+                    }
+                } else {
+                    showNotification('Este equipo no tiene biometría registrada. Se firmará con contraseña.', 'info');
+                }
+
+                const response = await fetch(`${API_URL}/documentos/firmar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({
+                        documento_id: documentoSeleccionado.id,
+                        razon: razon,
+                        ubicacion: ubicacion,
+                        firmante_nombre: firmanteNombre,
+                        firmante_curp: firmanteCurp,
+                        firmante_cargo: firmanteCargo,
+                        password: passwordFirma,
+                        metodo_verificacion: metodoVerificacion,
+                        biometric_verified: biometricVerified,
+                        credential_id: credentialId
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const mensaje = metodoVerificacion === 'fingerprint'
+                        ? 'OK Documento firmado con biometría y QR generado'
+                        : 'OK Documento firmado con contraseña y QR generado';
+                    showNotification(mensaje, 'success');
+                    mostrarResultadoFirma(result);
+                    documentos = documentos.map(doc => doc.id === documentoSeleccionado.id ? {
+                        ...doc,
+                        estado: 'Firmado',
+                        firmado: true
+                    } : doc);
+                    cargarDocumentosDisponibles();
+                    cancelarFirmaDocumento();
+                    cargarDashboard();
+                } else {
+                    showNotification('Error ' + result.message, 'error');
+                }
+            } catch (err) {
+                console.error('Error en proceso de firma:', err);
+                showNotification('No se pudo usar biometría. Intentando firmar solo con contraseña...', 'warning');
+
+                try {
+                    const response = await fetch(`${API_URL}/documentos/firmar`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentToken}`
+                        },
+                        body: JSON.stringify({
+                            documento_id: documentoSeleccionado.id,
+                            razon: razon,
+                            ubicacion: ubicacion,
+                            firmante_nombre: firmanteNombre,
+                            firmante_curp: firmanteCurp,
+                            firmante_cargo: firmanteCargo,
+                            password: passwordFirma,
+                            metodo_verificacion: 'password',
+                            biometric_verified: false
+                        })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showNotification('OK Documento firmado con contraseña y QR generado', 'success');
+                        mostrarResultadoFirma(result);
+                        cargarDocumentosDisponibles();
+                        cancelarFirmaDocumento();
+                        cargarDashboard();
+                    } else {
+                        showNotification('Error ' + result.message, 'error');
+                    }
+                } catch (fallbackErr) {
+                    showNotification('Error al firmar: ' + (fallbackErr.message || fallbackErr), 'error');
+                }
+            } finally {
+                btnFirmar.innerHTML = originalFirmarText;
+                btnFirmar.disabled = false;
+            }
+        });
+
+        // Función para actualizar la variable currentUser globalmente
+        function actualizarUsuarioGlobal() {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    currentUser = JSON.parse(userStr);
+                } catch (e) {
+                    currentUser = null;
+                }
+            }
+        }
+
+        // ========== AUDIT LOGS (Vista para Directores) ==========
+        function escapeHtml(unsafe) {
+            if (!unsafe && unsafe !== 0) return '';
+            return String(unsafe)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showAuditLogsIfDirector() {
+            actualizarUsuarioGlobal();
+            const roleEl = document.getElementById('userDisplayRole');
+            const role = (currentUser && currentUser.rol) || (roleEl && roleEl.textContent) || '';
+            if (role && role.trim().toLowerCase() === 'director') {
+                document.getElementById('auditLogsContainer').style.display = 'block';
+                document.getElementById('btnLoadLogs').addEventListener('click', loadAuditLogs);
+                document.getElementById('btnClearLogsView').addEventListener('click', clearAuditLogsView);
+            } else {
+                document.getElementById('auditLogsContainer').style.display = 'none';
+            }
+        }
+
+        async function loadAuditLogs() {
+            const btn = document.getElementById('btnLoadLogs');
+            const status = document.getElementById('logsStatus');
+            btn.disabled = true;
+            status.textContent = 'Cargando logs...';
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/admin/logs/accesos`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+                if (result && result.success) {
+                    renderAuditLogs(result.logs || result.data || []);
+                    status.textContent = '';
+                } else {
+                    status.textContent = '';
+                    showNotification(result.message || 'No se pudieron cargar los logs', 'error');
+                }
+            } catch (err) {
+                console.error('Error cargando logs:', err);
+                showNotification('Error cargando logs', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function renderAuditLogs(logs) {
+            const table = document.getElementById('auditLogsTable');
+            const tbody = document.getElementById('auditLogsTableBody');
+            const empty = document.getElementById('emptyAuditLogs');
+            tbody.innerHTML = '';
+
+            if (!logs || logs.length === 0) {
+                table.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                const fechaRaw = log.fecha_hora || log.fecha || log.created_at || '';
+                let fechaStr = '';
+                if (fechaRaw) {
+                    const d = new Date(fechaRaw);
+                    fechaStr = isNaN(d) ? fechaRaw : d.toLocaleString();
+                }
+
+                tr.innerHTML = `
+                    <td>${escapeHtml(log.usuario_nombre || log.nombre || '')}</td>
+                    <td>${escapeHtml(log.email || '')}</td>
+                    <td>${escapeHtml(log.accion || '')}</td>
+                    <td>${escapeHtml(fechaStr)}</td>
+                    <td>${escapeHtml(log.ip_address || log.ip || '')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearAuditLogsView() {
+            document.getElementById('auditLogsTableBody').innerHTML = '';
+            document.getElementById('auditLogsTable').style.display = 'none';
+            document.getElementById('emptyAuditLogs').style.display = 'none';
+            document.getElementById('logsStatus').textContent = '';
+        }
+
+        // Ejecutar al cargar la página para mostrar la sección si corresponde
+        try {
+            showAuditLogsIfDirector();
+        } catch (e) {
+            console.warn('No se pudo inicializar vista de logs:', e);
+        }
+
+    </script>
+</body>
+</html>
